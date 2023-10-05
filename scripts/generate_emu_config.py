@@ -10,6 +10,7 @@ import urllib.request
 import urllib.error
 import threading
 import queue
+import requests
 
 THREADS = 20
 
@@ -62,6 +63,7 @@ def download_achievement_images(game_id, image_names, output_folder):
 
 
 def generate_achievement_stats(game_id, output_directory):
+    achievements = None
     achievement_images_dir = os.path.join(output_directory, "achievement_images")
     images_to_download = []
     out = get_stats_schema(game_id)["game"]
@@ -73,99 +75,24 @@ def generate_achievement_stats(game_id, output_directory):
             if "icon" in ach:
                 images_to_download.append(ach["icon"])
                 ach["icon"] = ach["icon"].split('/')[-1]
-            if "icon_gray" in ach:
-                images_to_download.append(ach["icon_gray"])
-                ach["icon_gray"] = ach["icon_gray"].split('/')[-1]
+            if "icongray" in ach:
+                images_to_download.append(ach["icongray"])
+                ach["icon_gray"] = ach.pop("icongray").split('/')[-1]
 
+                
     if (len(images_to_download) > 0):
         if not os.path.exists(achievement_images_dir):
             os.makedirs(achievement_images_dir)
         download_achievement_images(game_id, images_to_download, achievement_images_dir)
-    
-    return out["availableGameStats"]["achievements"]
+    return achievements
 
-def get_ugc_info(client, published_file_id):
-    return client.send_um_and_wait('PublishedFile.GetDetails#1', {
-            'publishedfileids': [published_file_id],
-            'includetags': False,
-            'includeadditionalpreviews': False,
-            'includechildren': False,
-            'includekvtags': False,
-            'includevotes': False,
-            'short_description': True,
-            'includeforsaledata': False,
-            'includemetadata': False,
-            'language': 0
-        })
-
-def download_published_file(client, published_file_id, backup_directory):
-    ugc_info = get_ugc_info(client, published_file_id)
-
-    if (ugc_info is None):
-        print("failed getting published file", published_file_id)
-        return None
-
-    file_details = ugc_info.body.publishedfiledetails[0]
-    if (file_details.result != EResult.OK):
-        print("failed getting published file", published_file_id, file_details.result)
-        return None
-
-    if not os.path.exists(backup_directory):
-        os.makedirs(backup_directory)
-
-    with open(os.path.join(backup_directory, "info.txt"), "w") as f:
-        f.write(str(ugc_info.body))
-
-    if len(file_details.file_url) > 0:
-        with urllib.request.urlopen(file_details.file_url) as response:
-            data = response.read()
-            with open(os.path.join(backup_directory, file_details.filename.replace("/", "_").replace("\\", "_")), "wb") as f:
-                f.write(data)
-            return data
-    else:
-        print("Could not download file", published_file_id, "no url (you can ignore this if the game doesn't need a controller config)")
-        return None
-
-
-def get_inventory_info(client, game_id):
-    return client.send_um_and_wait('Inventory.GetItemDefMeta#1', {
-            'appid': game_id
-        })
-
-def generate_inventory(client, game_id):
-    inventory = get_inventory_info(client, appid)
-    if inventory.header.eresult != EResult.OK:
-        return None
-
-    url = "https://api.steampowered.com/IGameInventory/GetItemDefArchive/v0001?appid={}&digest={}".format(game_id, inventory.body.digest)
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read()
-    except urllib.error.HTTPError as e:
-        print("HTTPError getting", url, e.code)
-    except urllib.error.URLError as e:
-        print("URLError getting", url, e.code)
-    return None
-
-def get_dlc(raw_infos):
-    try:
-        try:
-            dlc_list = set(map(lambda a: int(a), raw_infos["extended"]["listofdlc"].split(",")))
-        except:
-            dlc_list = set()
-        depot_app_list = set()
-        if "depots" in raw_infos:
-            depots = raw_infos["depots"]
-            for dep in depots:
-                depot_info = depots[dep]
-                if "dlcappid" in depot_info:
-                    dlc_list.add(int(depot_info["dlcappid"]))
-                if "depotfromapp" in depot_info:
-                    depot_app_list.add(int(depot_info["depotfromapp"]))
-        return (dlc_list, depot_app_list)
-    except:
-        print("could not get dlc infos, are there any dlcs ?")
-        return (set(), set())
+def get_dlc(appid):
+    x = requests.get(f"https://store.steampowered.com/api/dlcforapp?appid={appid}").json()
+    if x["status"] != 1: return []
+    l = []
+    for dlc in x["dlc"]:
+        l.append(f"{dlc['id']}={dlc['name']}")
+    return l
 
 for appid in appids:
     backup_dir = os.path.join("backup","{}".format(appid))
@@ -189,92 +116,7 @@ for appid in appids:
     with open(os.path.join(out_dir, "steam_appid.txt"), 'w') as f:
         f.write(str(appid))
 
-    # if "depots" in game_info:
-    #     if "branches" in game_info["depots"]:
-    #         if "public" in game_info["depots"]["branches"]:
-    #             if "buildid" in game_info["depots"]["branches"]["public"]:
-    #                 buildid = game_info["depots"]["branches"]["public"]["buildid"]
-    #                 with open(os.path.join(out_dir, "build_id.txt"), 'w') as f:
-    #                     f.write(str(buildid))
+    dlc_list = get_dlc(appid)
 
-    # dlc_config_list = []
-    # dlc_list, depot_app_list = get_dlc(game_info)
-    # dlc_infos_backup = ""
-    # if (len(dlc_list) > 0):
-    #     dlc_raw = client.get_product_info(apps=dlc_list)["apps"]
-    #     for dlc in dlc_raw:
-    #         try:
-    #             dlc_config_list.append((dlc, dlc_raw[dlc]["common"]["name"]))
-    #         except:
-    #             dlc_config_list.append((dlc, None))
-    #     dlc_infos_backup = json.dumps(dlc_raw, indent=4)
-
-    # with open(os.path.join(out_dir, "DLC.txt"), 'w', encoding="utf-8") as f:
-    #     for x in dlc_config_list:
-    #         if (x[1] is not None):
-    #             f.write("{}={}\n".format(x[0], x[1]))
-
-    # config_generated = False
-    # if "config" in game_info:
-    #     if "steamcontrollerconfigdetails" in game_info["config"]:
-    #         controller_details = game_info["config"]["steamcontrollerconfigdetails"]
-    #         for id in controller_details:
-    #             details = controller_details[id]
-    #             controller_type = ""
-    #             enabled_branches = ""
-    #             if "controller_type" in details:
-    #                 controller_type = details["controller_type"]
-    #             if "enabled_branches" in details:
-    #                 enabled_branches = details["enabled_branches"]
-    #             print(id, controller_type)
-    #             out_vdf = download_published_file(client, int(id), os.path.join(backup_dir, controller_type + str(id)))
-    #             if out_vdf is not None and not config_generated:
-    #                 if (controller_type in ["controller_xbox360", "controller_xboxone"] and (("default" in enabled_branches) or ("public" in enabled_branches))):
-    #                     parse_controller_vdf.generate_controller_config(out_vdf.decode('utf-8'), os.path.join(out_dir, "controller"))
-    #                     config_generated = True
-    #     if "steamcontrollertouchconfigdetails" in game_info["config"]:
-    #         controller_details = game_info["config"]["steamcontrollertouchconfigdetails"]
-    #         for id in controller_details:
-    #             details = controller_details[id]
-    #             controller_type = ""
-    #             enabled_branches = ""
-    #             if "controller_type" in details:
-    #                 controller_type = details["controller_type"]
-    #             if "enabled_branches" in details:
-    #                 enabled_branches = details["enabled_branches"]
-    #             print(id, controller_type)
-    #             out_vdf = download_published_file(client, int(id), os.path.join(backup_dir, controller_type + str(id)))
-
-    # inventory_data = generate_inventory(client, appid)
-    # if inventory_data is not None:
-    #     out_inventory = {}
-    #     default_items = {}
-    #     inventory = json.loads(inventory_data.rstrip(b"\x00"))
-    #     raw_inventory = json.dumps(inventory, indent=4)
-    #     with open(os.path.join(backup_dir, "inventory.json"), "w") as f:
-    #         f.write(raw_inventory)
-    #     for i in inventory:
-    #         index = str(i["itemdefid"])
-    #         x = {}
-    #         for t in i:
-    #             if i[t] is True:
-    #                 x[t] = "true"
-    #             elif i[t] is False:
-    #                 x[t] = "false"
-    #             else:
-    #                 x[t] = str(i[t])
-    #         out_inventory[index] = x
-    #         default_items[index] = 1
-
-    #     out_json_inventory = json.dumps(out_inventory, indent=2)
-    #     with open(os.path.join(out_dir, "items.json"), "w") as f:
-    #         f.write(out_json_inventory)
-    #     out_json_inventory = json.dumps(default_items, indent=2)
-    #     with open(os.path.join(out_dir, "default_items.json"), "w") as f:
-    #         f.write(out_json_inventory)
-
-    # game_info_backup = json.dumps(game_info, indent=4)
-    # with open(os.path.join(backup_dir, "product_info.json"), "w") as f:
-    #     f.write(game_info_backup)
-    # with open(os.path.join(backup_dir, "dlc_product_info.json"), "w") as f:
-    #     f.write(dlc_infos_backup)
+    with open(os.path.join(out_dir, "DLC.txt"), 'w', encoding="utf-8") as f:
+        f.write('\n'.join(dlc_list))
