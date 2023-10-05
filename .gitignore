@@ -15,3 +15,6 @@ rtlgenrandom*
 steamclient.exp
 steamclient.lib
 out/*
+__pycache__
+scripts/backup
+scripts/*_output

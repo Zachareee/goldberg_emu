@@ -18,7 +18,11 @@ cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 cl /LD /DEMU_RELEASE_BUILD /DNDEBUG /I%PROTOBUF_X64_DIRECTORY%\include\ dll/*.cpp dll/*.cc "%PROTOBUF_X64_LIBRARY%" Iphlpapi.lib Ws2_32.lib rtlgenrandom.lib Shell32.lib /EHsc /MP12 /Ox /link /debug:none /OUT:release\steam_api64.dll
 copy Readme_release.txt release\Readme.txt
 xcopy /s files_example\* release\
+echo Building release experimental
 call build_win_release_experimental.bat
+echo Building release experimental steamclient
 call build_win_release_experimental_steamclient.bat
+echo Building lobby connect
 call build_win_lobby_connect.bat
+echo Building find interfaces
 call build_win_find_interfaces.bat

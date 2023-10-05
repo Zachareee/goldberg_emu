@@ -1,3 +1,5 @@
+# This is a fork of Goldberg's Steam Emulator, for the official repository please visit his [GitLab](https://gitlab.com/Mr_Goldberg/goldberg_emulator)
+This repository's focus will be on Windows builds only, and will attempt to remove fix any warnings and errors during compilation as well as provide customisability for the building environment
 # Goldberg Steam Emulator
 
 This is a steam emulator that emulates steam online features on a LAN. It works on both Linux and Windows. For a readme on how to use it see: [The Release Readme](Readme_release.txt)
