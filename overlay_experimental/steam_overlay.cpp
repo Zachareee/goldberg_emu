@@ -821,6 +821,13 @@ void Steam_Overlay::OverlayProc()
                 show_settings = true;
             }
 
+            ImGui::SameLine();
+
+            if (ImGui::Button("Test achievements")) {
+                nlohmann::json j = { {"displayName", "Test"}, {"description", "This is a test"} };
+                AddAchievementNotification(j);
+            }
+
             ImGui::Spacing();
             ImGui::Spacing();
 
