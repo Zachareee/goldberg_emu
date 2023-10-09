@@ -75,6 +75,8 @@ struct Overlay_Achievement
     std::string name;
     std::string title;
     std::string description;
+    std::string icon;
+    std::string icon_gray;
     bool hidden;
     bool achieved;
     uint32 unlock_time;

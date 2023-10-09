@@ -10,6 +10,7 @@
 
 #include "../dll/dll.h"
 #include "../dll/settings_parser.h"
+#include "../dll/common_includes.h"
 
 #include "Renderer_Detector.h"
 
@@ -851,7 +852,8 @@ void Steam_Overlay::OverlayProc()
             if (show_achievements && achievements.size()) {
                 ImGui::SetNextWindowSizeConstraints(ImVec2(ImGui::GetFontSize() * 32, ImGui::GetFontSize() * 32), ImVec2(8192, 8192));
                 bool show = show_achievements;
-                if (ImGui::Begin("Achievement Window", &show)) {
+                if (ImGui::Begin("Achievements", &show)) {
+                    class Local_Storage* storage;
                     ImGui::Text("List of achievements");
                     ImGui::BeginChild("Achievements");
                     for (auto & x : achievements) {
@@ -859,6 +861,17 @@ void Steam_Overlay::OverlayProc()
                         bool hidden = x.hidden && !achieved;
 
                         ImGui::Separator();
+                        std::string icon_str = Local_Storage::get_game_settings_path()
+                            + "achievement_images" + PATH_SEPARATOR + (achieved ? x.icon.data() : x.icon_gray.data());
+                        std::vector<image_pixel_t> icon_array = storage->load_image(icon_str.c_str());
+                        int icon_size = std::sqrt(icon_array.size());
+                        std::weak_ptr<uint64_t> icon = _renderer->CreateImageResource((const void*)&icon_array[0], icon_size, icon_size);
+
+                        auto icon_shared = icon.lock();
+
+                        ImGui::Image((ImTextureID) * (icon_shared.get()), ImVec2(icon_size, icon_size));
+                        ImGui::SameLine();
+                        ImGui::BeginGroup();
                         ImGui::Text("%s", x.title.c_str());
                         if (hidden) {
                             ImGui::Text("hidden achievement");
@@ -875,7 +888,7 @@ void Steam_Overlay::OverlayProc()
                         } else {
                             ImGui::TextColored(ImVec4(255, 0, 0, 255), "not achieved");
                         }
-                        ImGui::Separator();
+                        ImGui::EndGroup();
                     }
                     ImGui::EndChild();
                 }
@@ -1012,6 +1025,8 @@ void Steam_Overlay::RunCallbacks()
                 ach.name = steamUserStats->GetAchievementName(i);
                 ach.title = steamUserStats->GetAchievementDisplayAttribute(ach.name.c_str(), "name");
                 ach.description = steamUserStats->GetAchievementDisplayAttribute(ach.name.c_str(), "desc");
+                ach.icon = steamUserStats->GetAchievementDisplayAttribute(ach.name.c_str(), "icon");
+                ach.icon_gray = steamUserStats->GetAchievementDisplayAttribute(ach.name.c_str(), "icon_gray");
                 const char *hidden = steamUserStats->GetAchievementDisplayAttribute(ach.name.c_str(), "hidden");
                 if (strlen(hidden) && hidden[0] == '1') {
                     ach.hidden = true;

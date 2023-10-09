@@ -635,6 +635,26 @@ const char * GetAchievementDisplayAttribute( const char *pchName, const char *pc
         } catch (...) {}
     }
 
+    if (strcmp(pchKey, "icon") == 0) {
+        try {
+            auto it = defined_achievements_find(pchName);
+            if (it != defined_achievements.end()) {
+                return it.value()["icon"].get_ptr<std::string*>()->c_str();
+            }
+        }
+        catch (...) {}
+    }
+
+    if (strcmp(pchKey, "icon_gray") == 0) {
+        try {
+            auto it = defined_achievements_find(pchName);
+            if (it != defined_achievements.end()) {
+                return it.value()["icon_gray"].get_ptr<std::string*>()->c_str();
+            }
+        }
+        catch (...) {}
+    }
+
     return "";
 }
 
