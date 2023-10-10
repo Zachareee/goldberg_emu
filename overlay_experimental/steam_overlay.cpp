@@ -665,7 +665,7 @@ void Steam_Overlay::BuildNotifications(int width, int height)
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, Notification::max_alpha*2));
             }
             
-            ImGui::SetNextWindowPos(ImVec2((float)width - width * Notification::width, Notification::height * font_size * i ));
+            ImGui::SetNextWindowPos(ImVec2((float)width - width * Notification::width, height - Notification::height * font_size * i ), 0, ImVec2(0.0f, 1.0f));
             ImGui::SetNextWindowSize(ImVec2( width * Notification::width, Notification::height * font_size ));
             ImGui::Begin(std::to_string(it->id).c_str(), nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | 
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoDecoration);
