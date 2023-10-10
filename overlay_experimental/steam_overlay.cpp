@@ -424,7 +424,8 @@ void Steam_Overlay::AddAchievementNotification(nlohmann::json const& ach)
         notif.id = id;
         notif.type = notification_type_achievement;
         // Load achievement image
-        notif.message = ach["displayName"].get<std::string>() + "\n" + ach["description"].get<std::string>();
+        notif.title = ach["displayName"].get<std::string>();
+        notif.message = ach["description"].get<std::string>();
         notif.start_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
         notifications.emplace_back(notif);
         have_notifications = true;
@@ -637,6 +638,8 @@ void Steam_Overlay::BuildNotifications(int width, int height)
 
     std::queue<Friend> friend_actions_temp;
 
+    int font_colour = 255;
+
     {
         std::lock_guard<std::recursive_mutex> lock(notifications_mutex);
 
@@ -649,20 +652,20 @@ void Steam_Overlay::BuildNotifications(int width, int height)
                 float alpha = Notification::max_alpha * (elapsed_notif.count() / static_cast<float>(Notification::fade_in.count()));
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, alpha*2));
             }
             else if ( elapsed_notif > Notification::fade_out_start)
             {
                 float alpha = Notification::max_alpha * ((Notification::show_time - elapsed_notif).count() / static_cast<float>(Notification::fade_out.count()));
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, alpha*2));
             }
             else
             {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, Notification::max_alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, Notification::max_alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, Notification::max_alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, Notification::max_alpha*2));
             }
             
             ImGui::SetNextWindowPos(ImVec2((float)width - width * Notification::width, height - Notification::height * font_size * i ), 0, ImVec2(0.0f, 1.0f));
@@ -673,6 +676,11 @@ void Steam_Overlay::BuildNotifications(int width, int height)
             switch (it->type)
             {
                 case notification_type_achievement:
+                    ImGui::GetFont()->Scale *= 2;
+                    ImGui::PushFont(ImGui::GetFont());
+                    ImGui::Text("%s", it->title.c_str());
+                    ImGui::GetFont()->Scale /= 2;
+                    ImGui::PopFont();
                     ImGui::TextWrapped("%s", it->message.c_str());
                     break;
                 case notification_type_invite:

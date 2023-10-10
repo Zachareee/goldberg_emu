@@ -58,14 +58,15 @@ struct Notification
     static constexpr std::chrono::milliseconds fade_out  = std::chrono::milliseconds(2000);
     static constexpr std::chrono::milliseconds show_time = std::chrono::milliseconds(6000) + fade_in + fade_out;
     static constexpr std::chrono::milliseconds fade_out_start = show_time - fade_out;
-    static constexpr float r = 0.16;
-    static constexpr float g = 0.29;
-    static constexpr float b = 0.48;
+    static constexpr float r = 0.11;
+    static constexpr float g = 0.14;
+    static constexpr float b = 0.18;
     static constexpr float max_alpha = 0.5f;
 
     int id;
     uint8 type;
     std::chrono::seconds start_time;
+    std::string title;
     std::string message;
     std::pair<const Friend, friend_window_state>* frd;
 };
