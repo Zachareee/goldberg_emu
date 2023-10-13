@@ -18,3 +18,4 @@ out/*
 __pycache__
 scripts/backup
 scripts/*_output
+.secret

@@ -16,7 +16,9 @@ THREADS = 20
 
 prompt_for_unavailable = True
 
-web = WebAPI("")
+web = None
+with open(".secret","r") as f:
+    web = WebAPI(f.read().split('\n')[0])
 
 if len(sys.argv) < 2:
     print("\nUsage: {} appid appid appid etc..\n\nExample: {} 480\n".format(sys.argv[0], sys.argv[0]))
@@ -71,7 +73,11 @@ def generate_achievement_stats(game_id, output_directory):
         achievements = out["availableGameStats"]["achievements"]
         for ach in achievements:
             ach["displayName"] = {"english": ach["displayName"]}
-            ach["description"] = {"english": ach["description"]}
+            ach["hidden"] = f"{ach['hidden']}"
+            if "description" in ach:
+                ach["description"] = {"english": ach["description"]}
+            else:
+                ach["description"] = {"english": "This achievement is hidden"}
             if "icon" in ach:
                 images_to_download.append(ach["icon"])
                 ach["icon"] = ach["icon"].split('/')[-1]

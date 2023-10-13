@@ -873,7 +873,7 @@ void Steam_Overlay::OverlayProc()
                     ImGui::BeginChild("Achievements");
                     for (auto & x : achievements) {
                         bool achieved = x.achieved;
-                        bool hidden = x.hidden && !achieved;
+                        bool hidden = x.hidden;// && !achieved;
 
                         ImGui::Separator();
                         std::string icon_str = Local_Storage::get_game_settings_path()
