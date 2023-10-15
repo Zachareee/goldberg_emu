@@ -426,6 +426,7 @@ void Steam_Overlay::AddAchievementNotification(nlohmann::json const& ach)
         // Load achievement image
         notif.title = ach["displayName"].get<std::string>();
         notif.message = ach["description"].get<std::string>();
+        notif.icon = ach["icon"].get<std::string>();
         notif.start_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
         notifications.emplace_back(notif);
         have_notifications = true;
@@ -676,13 +677,23 @@ void Steam_Overlay::BuildNotifications(int width, int height)
             switch (it->type)
             {
                 case notification_type_achievement:
+                {
+                    int icon_size = 0;
+                    std::weak_ptr<uint64_t> icon = GenerateIcon(it->icon, &icon_size);
+                    auto icon_shared = icon.lock();
+                    ImGui::Image((ImTextureID) * (icon_shared.get()), ImVec2(icon_size, icon_size));
+
+                    ImGui::SameLine();
+                    ImGui::BeginGroup();
                     ImGui::GetFont()->Scale *= 2;
                     ImGui::PushFont(ImGui::GetFont());
                     ImGui::Text("%s", it->title.c_str());
                     ImGui::GetFont()->Scale /= 2;
                     ImGui::PopFont();
                     ImGui::TextWrapped("%s", it->message.c_str());
+                    ImGui::EndGroup();
                     break;
+                }
                 case notification_type_invite:
                     {
                         ImGui::TextWrapped("%s", it->message.c_str());
@@ -832,7 +843,7 @@ void Steam_Overlay::OverlayProc()
             ImGui::SameLine();
 
             if (ImGui::Button("Test achievements")) {
-                nlohmann::json j = { {"displayName", "Test"}, {"description", "This is a test"} };
+                nlohmann::json j = { {"displayName", "Test"}, {"description", "This is a test"}, {"icon", ""} };
                 AddAchievementNotification(j);
             }
 
@@ -1027,9 +1038,14 @@ void Steam_Overlay::Callback(Common_Message *msg)
 }
 
 std::weak_ptr<uint64_t> Steam_Overlay::GenerateIcon(std::string &name, int *size) {
+    if (name == "") {
+        auto obj = icon_map.begin();
+        *size = obj->second.second;
+        return obj->second.first;
+    }
     auto entry = icon_map.find(name);
     if (entry == icon_map.end()) {
-        class Local_Storage* storage;
+        Local_Storage *storage = new Local_Storage("");
         std::string filename = Local_Storage::get_game_settings_path()
             + "achievement_images" + PATH_SEPARATOR + name;
         std::vector<image_pixel_t> icon_array = storage->load_image(filename.c_str());

@@ -68,6 +68,7 @@ struct Notification
     std::chrono::seconds start_time;
     std::string title;
     std::string message;
+    std::string icon;
     std::pair<const Friend, friend_window_state>* frd;
 };
 
