@@ -868,7 +868,6 @@ void Steam_Overlay::OverlayProc()
                 ImGui::SetNextWindowSizeConstraints(ImVec2(ImGui::GetFontSize() * 32, ImGui::GetFontSize() * 32), ImVec2(8192, 8192));
                 bool show = show_achievements;
                 if (ImGui::Begin("Achievements", &show)) {
-                    class Local_Storage* storage;
                     ImGui::Text("List of achievements");
                     ImGui::BeginChild("Achievements");
                     for (auto & x : achievements) {
@@ -876,11 +875,10 @@ void Steam_Overlay::OverlayProc()
                         bool hidden = x.hidden;// && !achieved;
 
                         ImGui::Separator();
-                        std::string icon_str = Local_Storage::get_game_settings_path()
-                            + "achievement_images" + PATH_SEPARATOR + (achieved ? x.icon.data() : x.icon_gray.data());
-                        std::vector<image_pixel_t> icon_array = storage->load_image(icon_str.c_str());
-                        int icon_size = std::sqrt(icon_array.size());
-                        std::weak_ptr<uint64_t> icon = _renderer->CreateImageResource((const void*)&icon_array[0], icon_size, icon_size);
+                        std::string icon_str = (achieved ? x.icon.data() : x.icon_gray.data());
+                        
+                        int icon_size = 0;
+                        std::weak_ptr<uint64_t> icon = GenerateIcon(icon_str, &icon_size);
 
                         auto icon_shared = icon.lock();
 
@@ -1026,6 +1024,24 @@ void Steam_Overlay::Callback(Common_Message *msg)
             NotifyUser(friend_info->second);
         }
     }
+}
+
+std::weak_ptr<uint64_t> Steam_Overlay::GenerateIcon(std::string &name, int *size) {
+    auto entry = icon_map.find(name);
+    if (entry == icon_map.end()) {
+        class Local_Storage* storage;
+        std::string filename = Local_Storage::get_game_settings_path()
+            + "achievement_images" + PATH_SEPARATOR + name;
+        std::vector<image_pixel_t> icon_array = storage->load_image(filename.c_str());
+        int icon_size = std::sqrt(icon_array.size());
+        std::weak_ptr<uint64_t> icon = _renderer->CreateImageResource((const void*)&icon_array[0], icon_size, icon_size);
+        icon_map.insert({ name, { icon, icon_size } });
+        *size = icon_size;
+        return icon;
+    }
+
+    *size = entry->second.second;
+    return entry->second.first;
 }
 
 void Steam_Overlay::RunCallbacks()

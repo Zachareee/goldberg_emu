@@ -105,6 +105,7 @@ class Steam_Overlay
     std::string show_url;
     std::vector<Overlay_Achievement> achievements;
     bool show_achievements, show_settings;
+    std::map<std::string, std::pair<std::weak_ptr<uint64_t>, int>> icon_map;
     void *fonts_atlas;
 
     bool disable_forced, local_save, warning_forced;
@@ -139,6 +140,7 @@ class Steam_Overlay
     static void steam_overlay_callback(void* object, Common_Message* msg);
 
     void Callback(Common_Message* msg);
+    std::weak_ptr<uint64_t> GenerateIcon(std::string& name, int* size);
     void RunCallbacks();
 
     bool FriendJoinable(std::pair<const Friend, friend_window_state> &f);
