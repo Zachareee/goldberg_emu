@@ -217,7 +217,7 @@ public:
     void OpenOverlay(const char* pchDialog) {}
     void OpenOverlayWebpage(const char* pchURL) {}
 
-    bool ShowOverlay() const {}
+    bool ShowOverlay() const { return false; }
     void ShowOverlay(bool state) {}
     bool OpenOverlayHook(bool toggle) {}
 
