@@ -60,11 +60,11 @@
     #include <shlobj.h>
 
     #define MSG_NOSIGNAL 0
-
+/*
     #define SystemFunction036 NTAPI SystemFunction036
     #include <ntsecapi.h>
     #undef SystemFunction036
-
+*/
     #ifndef EMU_RELEASE_BUILD
         #define PRINT_DEBUG(a, ...) do {FILE *t = fopen("STEAM_LOG.txt", "a"); fprintf(t, "%u " a, GetCurrentThreadId(), __VA_ARGS__); fclose(t); WSASetLastError(0);} while (0)
     #endif

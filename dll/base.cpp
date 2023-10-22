@@ -19,9 +19,15 @@
 
 #ifdef __WINDOWS__
 
+BOOLEAN(APIENTRY* RtlGenRandom)(void*, ULONG) = NULL;
+
 static void
 randombytes(char * const buf, const size_t size)
 {
+    if (RtlGenRandom == NULL)
+    {
+        RtlGenRandom = (BOOLEAN(APIENTRY*)(void*, ULONG))GetProcAddress(LoadLibraryW(L"advapi32.dll"), "SystemFunction036");
+    }
     while (!RtlGenRandom((PVOID) buf, (ULONG) size)) {
         PRINT_DEBUG("RtlGenRandom ERROR\n");
         Sleep(100);
