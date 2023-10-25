@@ -20,6 +20,11 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
+**Affected games**
+
+**API version**
+steam_api.dll or steam_api64.dll
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
