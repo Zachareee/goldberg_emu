@@ -25,7 +25,7 @@ def cl_line_exe(arguments, linker_arguments):
 jobs = 4
 normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs)]
 
-includes = ["ImGui", "overlay_experimental"]
+includes = ["ingame_oveylay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include/ingame_overlay", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include"]
 includes_32 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X86_DIRECTORY%\\include\\"] + includes))
 includes_64 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X64_DIRECTORY%\\include\\"] + includes))
 
@@ -42,7 +42,7 @@ linker_32 = ['"%PROTOBUF_X86_LIBRARY%"']
 linker_64 = ['"%PROTOBUF_X64_LIBRARY%"']
 
 controller_deps = ["controller/gamepad.c"]
-imgui_deps =  files_from_dir("ImGui", ".cpp") + ["ImGui/backends/imgui_impl_dx9.cpp", "ImGui/backends/imgui_impl_dx10.cpp", "ImGui/backends/imgui_impl_dx11.cpp", "ImGui/backends/imgui_impl_win32.cpp", "ImGui/backends/imgui_impl_opengl3.cpp"]
+imgui_deps =  files_from_dir("ingame_overlay/deps/ImGui", ".cpp") + ["ingame_overlay/deps/ImGui/backends/imgui_impl_dx9.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_dx10.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_dx11.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_win32.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_opengl3.cpp"]
 proto_deps = list(map(lambda a: a.replace(".proto", ".pb.cc"), files_from_dir("dll", ".proto")))
 all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + imgui_deps + files_from_dir("ingame_overlay/deps/System", ".cpp")
 
