@@ -36,7 +36,7 @@ steamclient_build_args = ["/DSTEAMCLIENT_DLL"]
 experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY"]
 steamclient_experimental_build_args = experimental_build_args + steamclient_build_args
 
-normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "rtlgenrandom.lib", "Shell32.lib"]
+normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib",  "Shell32.lib"]
 experimental_linker_libs = ["opengl32.lib", "Winmm.lib"] + normal_linker_libs
 linker_32 = ['"%PROTOBUF_X86_LIBRARY%"']
 linker_64 = ['"%PROTOBUF_X64_LIBRARY%"']
@@ -67,12 +67,10 @@ call build_set_protobuf_directories.bat
 
 head_32bit = """"%PROTOC_X86_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x86.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 head_64bit = """"%PROTOC_X64_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x64.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 footer = """
