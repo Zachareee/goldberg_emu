@@ -36,19 +36,19 @@ steamclient_build_args = ["/DSTEAMCLIENT_DLL"]
 experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY"]
 steamclient_experimental_build_args = experimental_build_args + steamclient_build_args
 
-normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "rtlgenrandom.lib", "Shell32.lib"]
+normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "Shell32.lib"]
 experimental_linker_libs = ["opengl32.lib", "Winmm.lib"] + normal_linker_libs
 linker_32 = ['"%PROTOBUF_X86_LIBRARY%"']
 linker_64 = ['"%PROTOBUF_X64_LIBRARY%"']
 
 controller_deps = ["controller/gamepad.c"]
-imgui_deps =  files_from_dir("ImGui", ".cpp") + ["ImGui/backends/imgui_impl_dx9.cpp", "ImGui/backends/imgui_impl_dx10.cpp", "ImGui/backends/imgui_impl_dx11.cpp", "ImGui/backends/imgui_impl_dx12.cpp", "ImGui/backends/imgui_impl_win32.cpp", "ImGui/backends/imgui_impl_vulkan.cpp", "ImGui/backends/imgui_impl_opengl3.cpp", "ImGui/backends/imgui_win_shader_blobs.cpp"]
+imgui_deps =  files_from_dir("ImGui", ".cpp") + ["ImGui/backends/imgui_impl_dx9.cpp", "ImGui/backends/imgui_impl_dx10.cpp", "ImGui/backends/imgui_impl_dx11.cpp", "ImGui/backends/imgui_impl_win32.cpp", "ImGui/backends/imgui_impl_opengl3.cpp"]
 proto_deps = list(map(lambda a: a.replace(".proto", ".pb.cc"), files_from_dir("dll", ".proto")))
-all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + imgui_deps + files_from_dir("overlay_experimental/System", ".cpp")
+all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + imgui_deps + files_from_dir("ingame_overlay/deps/System", ".cpp")
 
 sc_different_deps = ["flat.cpp", "dll.cpp"]
 steam_deps = files_from_dir("dll", ".cpp", sc_different_deps)
-overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("overlay_experimental/windows", ".cpp")
+overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp")
 experimental_steam_deps = steam_deps + overlay_deps
 sc_different_deps = list(map(lambda a: "dll/" + a, sc_different_deps))
 
@@ -67,12 +67,10 @@ call build_set_protobuf_directories.bat
 
 head_32bit = """"%PROTOC_X86_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x86.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 head_64bit = """"%PROTOC_X64_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x64.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 footer = """

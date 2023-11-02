@@ -4,3 +4,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "ingame_overlay"]
+	path = ingame_overlay
+	url = https://github.com/Nemirtingas/ingame_overlay
