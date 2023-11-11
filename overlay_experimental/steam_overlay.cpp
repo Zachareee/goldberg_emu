@@ -278,11 +278,12 @@ void Steam_Overlay::ShowOverlay(bool state)
     }
 
 #ifdef __WINDOWS__
-    static RECT old_clip;
+    /*static RECT old_clip;
 
     if (state)
     {
         HWND game_hwnd = Windows_Hook::Inst()->GetGameHwnd();
+        Windows_Hook* whook = Windows_Hook::Inst();
         RECT cliRect, wndRect, clipRect;
 
         GetClipCursor(&old_clip);
@@ -312,7 +313,7 @@ void Steam_Overlay::ShowOverlay(bool state)
     else
     {
         ClipCursor(&old_clip);
-    }
+    }*/
 
 #else
 
@@ -1112,8 +1113,9 @@ void Steam_Overlay::RunCallbacks()
             auto callback = std::bind(&Steam_Overlay::OpenOverlayHook, this, std::placeholders::_1);
             PRINT_DEBUG("start renderer\n", _renderer);
             std::set<ingame_overlay::ToggleKey> keys = {ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB};
-            _renderer->ImGuiFontAtlas = fonts_atlas;
-            bool started = _renderer->StartHook(callback, keys);
+            //_renderer->ImGuiFontAtlas = fonts_atlas;
+            std::function<void()> hookFunction = [this]() { Steam_Overlay::OpenOverlayHook(true); };
+            bool started = _renderer->StartHook(hookFunction, keys, fonts_atlas);
             PRINT_DEBUG("tried to start renderer %u\n", started);
     }
 
