@@ -18,7 +18,7 @@ prompt_for_unavailable = True
 
 web = None
 with open(".secret","r") as f:
-    web = WebAPI(f.read().split('\n')[0])
+    web = WebAPI(f.read().strip())
 
 if len(sys.argv) < 2:
     print("\nUsage: {} appid appid appid etc..\n\nExample: {} 480\n".format(sys.argv[0], sys.argv[0]))

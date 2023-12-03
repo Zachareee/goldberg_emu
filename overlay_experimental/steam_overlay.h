@@ -108,6 +108,7 @@ class Steam_Overlay
     bool show_achievements, show_settings;
     std::map<std::string, std::pair<std::weak_ptr<uint64_t>, int>> icon_map;
     void *fonts_atlas;
+    std::set<ingame_overlay::ToggleKey> keys = { ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB };
 
     bool disable_forced, local_save, warning_forced;
     uint32_t appid;

@@ -1099,6 +1099,8 @@ void Steam_Overlay::RunCallbacks()
         }
     }
 
+    PRINT_DEBUG("%s: Ready state is %s, future renderer is %s\n", __FUNCTION__, Ready() ? "ready" : "not ready", future_renderer.valid() ? "valid" : "invalid");
+
     if (!Ready() && future_renderer.valid()) {
         if (future_renderer.wait_for(std::chrono::milliseconds{0}) ==  std::future_status::ready) {
             _renderer = future_renderer.get();
@@ -1110,9 +1112,9 @@ void Steam_Overlay::RunCallbacks()
     if (!Ready() && _renderer) {
             _renderer->OverlayHookReady = std::bind(&Steam_Overlay::HookReady, this, std::placeholders::_1);
             _renderer->OverlayProc = std::bind(&Steam_Overlay::OverlayProc, this);
-            auto callback = std::bind(&Steam_Overlay::OpenOverlayHook, this, std::placeholders::_1);
+            //auto callback = std::bind(&Steam_Overlay::OpenOverlayHook, this, std::placeholders::_1);
             PRINT_DEBUG("start renderer\n", _renderer);
-            std::set<ingame_overlay::ToggleKey> keys = {ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB};
+            
             //_renderer->ImGuiFontAtlas = fonts_atlas;
             std::function<void()> hookFunction = [this]() { Steam_Overlay::OpenOverlayHook(true); };
             bool started = _renderer->StartHook(hookFunction, keys, fonts_atlas);

@@ -26,7 +26,7 @@ def cl_line_exe(arguments, linker_arguments):
 jobs = 4
 normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs), "/D ImTextureID=ImU64", f"/DUTF_CPP_CPLUSPLUS={CPPVERSION}"]
 
-includes = ["ingame_overlay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include/ingame_overlay", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include", "ingame_overlay/deps/mini_detour/deps/capstone/include", "ingame_overlay/deps/System/include", "ingame_overlay/deps/System/deps/utfcpp/include"]
+includes = ["dll", "ingame_overlay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include/ingame_overlay", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include", "ingame_overlay/deps/mini_detour/deps/capstone/include", "ingame_overlay/deps/System/include", "ingame_overlay/deps/System/deps/utfcpp/include"]
 includes_32 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X86_DIRECTORY%\\include\\"] + includes))
 includes_64 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X64_DIRECTORY%\\include\\"] + includes))
 
@@ -34,7 +34,7 @@ debug_build_args = []
 release_build_args = ["/DEMU_RELEASE_BUILD", "/DNDEBUG"]
 steamclient_build_args = ["/DSTEAMCLIENT_DLL"]
 
-experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY"]
+experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY", "/DUSE_SPDLOG"]
 steamclient_experimental_build_args = experimental_build_args + steamclient_build_args
 
 normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "Shell32.lib"]
