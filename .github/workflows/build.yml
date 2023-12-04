@@ -24,13 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Increment version
-        uses: reecetech/version-increment@2023.4.1
-        id: version
-        with:
-          scheme: semver
-          increment: patch
-
       - name: Installation
         run: |
             vcpkg install protobuf --triplet x86-windows-static
@@ -43,14 +36,14 @@ jobs:
 
       - name: Package
         run: |
-            Compress-Archive release/* "goldberg-emulator-zachareee-${{ steps.version.outputs.version }}.zip" -CompressionLevel Optimal
+            Compress-Archive release/* "goldberg-emulator-zachareee-${{ github.run_id }}.zip" -CompressionLevel Optimal
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "goldberg-emulator-zachareee-${{ steps.version.outputs.version }}.zip"
+          artifacts: "goldberg-emulator-zachareee-${{ github.run_id }}.zip"
           replacesArtifacts: false
           allowUpdates: true
           generateReleaseNotes: true
-          name: "Release v${{ steps.version.outputs.version }}"
-          tag: "v${{ steps.version.outputs.version }}"
+          name: "Release ${{ github.run_id }}"
+          tag: "${{ github.run_id }}"
