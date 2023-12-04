@@ -31,6 +31,9 @@ jobs:
             vcpkg install protobuf --triplet x86-windows-static
             vcpkg install protobuf --triplet x64-windows-static
 
+      - name: Setup Developer CMD
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build
         run: |
             python generate_build_win_bat.py
