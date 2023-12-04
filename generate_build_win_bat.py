@@ -87,7 +87,7 @@ call build_win_lobby_connect.bat
 call build_win_find_interfaces.bat
 """
 
-out = head_32bit
+out = localise(head_32bit)
 
 deps_folder = "deps"
 sc_deps_folder = "deps_sc"
@@ -117,10 +117,10 @@ out += generate_common(includes_32, linker_32, "steam_api.dll", "steamclient.dll
 
 out += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib", "user32.lib"] + normal_build_args, ["/debug:none", "/OUT:release\experimental_steamclient\steamclient_loader.exe"])
 
-out += head_64bit
+out += localise(head_64bit)
 out += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
 
-out = localise(out)
+#out = localise(out)
 
 out = head + out + footer
 
