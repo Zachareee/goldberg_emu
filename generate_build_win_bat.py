@@ -23,6 +23,9 @@ def cl_line_link(arguments, linker_arguments):
 def cl_line_exe(arguments, linker_arguments):
     return "cl {} /link {}\n".format(' '.join(arguments), ' '.join(linker_arguments))
 
+def localise(command: str) -> str:
+    return "setlocal\n" + command + "endlocal\n"
+
 jobs = 4
 normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs), "/D ImTextureID=ImU64", f"/DUTF_CPP_CPLUSPLUS={CPPVERSION}"]
 
@@ -84,8 +87,7 @@ call build_win_lobby_connect.bat
 call build_win_find_interfaces.bat
 """
 
-out = head
-out += head_32bit
+out = head_32bit
 
 deps_folder = "deps"
 sc_deps_folder = "deps_sc"
@@ -118,8 +120,9 @@ out += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib
 out += head_64bit
 out += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
 
+out = localise(out)
 
-out += footer
+out = head + out + footer
 
 
 with open("build_win_release_test.bat", "w") as f:
