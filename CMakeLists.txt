@@ -116,7 +116,9 @@ target_include_directories(${LIB_STEAM_API}
   PRIVATE
   ${PROTOBUF_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ImGui
+  ${CMAKE_CURRENT_SOURCE_DIR}/ingame_overlay/deps/ImGui
+  ${CMAKE_CURRENT_SOURCE_DIR}/ingame_overlay/include/ingame_overlay
+  ${CMAKE_CURRENT_SOURCE_DIR}/ingame_overlay/src
   ${CMAKE_CURRENT_SOURCE_DIR}/glew/include
 )
 

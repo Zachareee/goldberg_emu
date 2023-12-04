@@ -1,0 +1,6 @@
+[submodule "stb"]
+	path = stb
+	url = https://github.com/nothings/stb.git
+[submodule "ingame_overlay"]
+	path = ingame_overlay
+	url = https://github.com/Nemirtingas/ingame_overlay
