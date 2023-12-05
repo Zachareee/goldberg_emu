@@ -87,7 +87,7 @@ call build_win_lobby_connect.bat
 call build_win_find_interfaces.bat
 """
 
-out = localise(head_32bit)
+x86 = head_32bit
 
 deps_folder = "deps"
 sc_deps_folder = "deps_sc"
@@ -113,16 +113,16 @@ def generate_common(include_arch, linker_arch, steam_api_name, steamclient_name)
     out += cl_line_link(release_build_args + experimental_build_args + ["steamclient.cpp"] + normal_build_args, ["/debug:none", "/OUT:release\experimental\\{}".format(steamclient_name)])
     return out
 
-out += generate_common(includes_32, linker_32, "steam_api.dll", "steamclient.dll")
+x86 += generate_common(includes_32, linker_32, "steam_api.dll", "steamclient.dll")
 
-out += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib", "user32.lib"] + normal_build_args, ["/debug:none", "/OUT:release\experimental_steamclient\steamclient_loader.exe"])
+x86 += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib", "user32.lib"] + normal_build_args, ["/debug:none", "/OUT:release\experimental_steamclient\steamclient_loader.exe"])
 
-out += localise(head_64bit)
-out += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
+x64 = head_64bit
+x64 += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
 
 #out = localise(out)
 
-out = head + out + footer
+out = head + localise(x86) + localise(x64) + footer
 
 
 with open("build_win_release_test.bat", "w") as f:
