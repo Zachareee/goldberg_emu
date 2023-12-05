@@ -278,11 +278,12 @@ void Steam_Overlay::ShowOverlay(bool state)
     }
 
 #ifdef __WINDOWS__
-    static RECT old_clip;
+    /*static RECT old_clip;
 
     if (state)
     {
         HWND game_hwnd = Windows_Hook::Inst()->GetGameHwnd();
+        Windows_Hook* whook = Windows_Hook::Inst();
         RECT cliRect, wndRect, clipRect;
 
         GetClipCursor(&old_clip);
@@ -312,7 +313,7 @@ void Steam_Overlay::ShowOverlay(bool state)
     else
     {
         ClipCursor(&old_clip);
-    }
+    }*/
 
 #else
 
@@ -424,7 +425,9 @@ void Steam_Overlay::AddAchievementNotification(nlohmann::json const& ach)
         notif.id = id;
         notif.type = notification_type_achievement;
         // Load achievement image
-        notif.message = ach["displayName"].get<std::string>() + "\n" + ach["description"].get<std::string>();
+        notif.title = ach["displayName"].get<std::string>();
+        notif.message = ach["description"].get<std::string>();
+        notif.icon = ach["icon"].get<std::string>();
         notif.start_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
         notifications.emplace_back(notif);
         have_notifications = true;
@@ -637,6 +640,8 @@ void Steam_Overlay::BuildNotifications(int width, int height)
 
     std::queue<Friend> friend_actions_temp;
 
+    int font_colour = 255;
+
     {
         std::lock_guard<std::recursive_mutex> lock(notifications_mutex);
 
@@ -649,23 +654,23 @@ void Steam_Overlay::BuildNotifications(int width, int height)
                 float alpha = Notification::max_alpha * (elapsed_notif.count() / static_cast<float>(Notification::fade_in.count()));
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, alpha*2));
             }
             else if ( elapsed_notif > Notification::fade_out_start)
             {
                 float alpha = Notification::max_alpha * ((Notification::show_time - elapsed_notif).count() / static_cast<float>(Notification::fade_out.count()));
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, alpha*2));
             }
             else
             {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, Notification::max_alpha));
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(Notification::r, Notification::g, Notification::b, Notification::max_alpha));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, Notification::max_alpha*2));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(font_colour, font_colour, font_colour, Notification::max_alpha*2));
             }
             
-            ImGui::SetNextWindowPos(ImVec2((float)width - width * Notification::width, Notification::height * font_size * i ));
+            ImGui::SetNextWindowPos(ImVec2((float)width - width * Notification::width, height - Notification::height * font_size * i ), 0, ImVec2(0.0f, 1.0f));
             ImGui::SetNextWindowSize(ImVec2( width * Notification::width, Notification::height * font_size ));
             ImGui::Begin(std::to_string(it->id).c_str(), nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | 
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoDecoration);
@@ -673,8 +678,23 @@ void Steam_Overlay::BuildNotifications(int width, int height)
             switch (it->type)
             {
                 case notification_type_achievement:
+                {
+                    int icon_size = 0;
+                    std::weak_ptr<uint64_t> icon = GenerateIcon(it->icon, &icon_size);
+                    auto icon_shared = icon.lock();
+                    ImGui::Image((ImTextureID) * (icon_shared.get()), ImVec2(icon_size, icon_size));
+
+                    ImGui::SameLine();
+                    ImGui::BeginGroup();
+                    ImGui::GetFont()->Scale *= 2;
+                    ImGui::PushFont(ImGui::GetFont());
+                    ImGui::Text("%s", it->title.c_str());
+                    ImGui::GetFont()->Scale /= 2;
+                    ImGui::PopFont();
                     ImGui::TextWrapped("%s", it->message.c_str());
+                    ImGui::EndGroup();
                     break;
+                }
                 case notification_type_invite:
                     {
                         ImGui::TextWrapped("%s", it->message.c_str());
@@ -821,6 +841,13 @@ void Steam_Overlay::OverlayProc()
                 show_settings = true;
             }
 
+            ImGui::SameLine();
+
+            if (ImGui::Button("Test achievements")) {
+                nlohmann::json j = { {"displayName", "Test"}, {"description", "This is a test"}, {"icon", ""} };
+                AddAchievementNotification(j);
+            }
+
             ImGui::Spacing();
             ImGui::Spacing();
 
@@ -853,19 +880,17 @@ void Steam_Overlay::OverlayProc()
                 ImGui::SetNextWindowSizeConstraints(ImVec2(ImGui::GetFontSize() * 32, ImGui::GetFontSize() * 32), ImVec2(8192, 8192));
                 bool show = show_achievements;
                 if (ImGui::Begin("Achievements", &show)) {
-                    class Local_Storage* storage;
                     ImGui::Text("List of achievements");
                     ImGui::BeginChild("Achievements");
                     for (auto & x : achievements) {
                         bool achieved = x.achieved;
-                        bool hidden = x.hidden && !achieved;
+                        bool hidden = x.hidden;// && !achieved;
 
                         ImGui::Separator();
-                        std::string icon_str = Local_Storage::get_game_settings_path()
-                            + "achievement_images" + PATH_SEPARATOR + (achieved ? x.icon.data() : x.icon_gray.data());
-                        std::vector<image_pixel_t> icon_array = storage->load_image(icon_str.c_str());
-                        int icon_size = std::sqrt(icon_array.size());
-                        std::weak_ptr<uint64_t> icon = _renderer->CreateImageResource((const void*)&icon_array[0], icon_size, icon_size);
+                        std::string icon_str = (achieved ? x.icon.data() : x.icon_gray.data());
+                        
+                        int icon_size = 0;
+                        std::weak_ptr<uint64_t> icon = GenerateIcon(icon_str, &icon_size);
 
                         auto icon_shared = icon.lock();
 
@@ -1013,6 +1038,29 @@ void Steam_Overlay::Callback(Common_Message *msg)
     }
 }
 
+std::weak_ptr<uint64_t> Steam_Overlay::GenerateIcon(std::string &name, int *size) {
+    if (name == "") {
+        auto obj = icon_map.begin();
+        *size = obj->second.second;
+        return obj->second.first;
+    }
+    auto entry = icon_map.find(name);
+    if (entry == icon_map.end()) {
+        Local_Storage *storage = new Local_Storage("");
+        std::string filename = Local_Storage::get_game_settings_path()
+            + "achievement_images" + PATH_SEPARATOR + name;
+        std::vector<image_pixel_t> icon_array = storage->load_image(filename.c_str());
+        int icon_size = std::sqrt(icon_array.size());
+        std::weak_ptr<uint64_t> icon = _renderer->CreateImageResource((const void*)&icon_array[0], icon_size, icon_size);
+        icon_map.insert({ name, { icon, icon_size } });
+        *size = icon_size;
+        return icon;
+    }
+
+    *size = entry->second.second;
+    return entry->second.first;
+}
+
 void Steam_Overlay::RunCallbacks()
 {
     if (!achievements.size()) {
@@ -1051,6 +1099,8 @@ void Steam_Overlay::RunCallbacks()
         }
     }
 
+    PRINT_DEBUG("%s: Ready state is %s, future renderer is %s\n", __FUNCTION__, Ready() ? "ready" : "not ready", future_renderer.valid() ? "valid" : "invalid");
+
     if (!Ready() && future_renderer.valid()) {
         if (future_renderer.wait_for(std::chrono::milliseconds{0}) ==  std::future_status::ready) {
             _renderer = future_renderer.get();
@@ -1062,11 +1112,12 @@ void Steam_Overlay::RunCallbacks()
     if (!Ready() && _renderer) {
             _renderer->OverlayHookReady = std::bind(&Steam_Overlay::HookReady, this, std::placeholders::_1);
             _renderer->OverlayProc = std::bind(&Steam_Overlay::OverlayProc, this);
-            auto callback = std::bind(&Steam_Overlay::OpenOverlayHook, this, std::placeholders::_1);
+            //auto callback = std::bind(&Steam_Overlay::OpenOverlayHook, this, std::placeholders::_1);
             PRINT_DEBUG("start renderer\n", _renderer);
-            std::set<ingame_overlay::ToggleKey> keys = {ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB};
-            _renderer->ImGuiFontAtlas = fonts_atlas;
-            bool started = _renderer->StartHook(callback, keys);
+            
+            //_renderer->ImGuiFontAtlas = fonts_atlas;
+            std::function<void()> hookFunction = [this]() { Steam_Overlay::OpenOverlayHook(true); };
+            bool started = _renderer->StartHook(hookFunction, keys, fonts_atlas);
             PRINT_DEBUG("tried to start renderer %u\n", started);
     }
 

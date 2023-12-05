@@ -6,7 +6,7 @@ name: build
 on:
   # Triggers the workflow on pull request events but only for the "main" branch
   push:
-    branches: [ "master" ]
+    branches: [ "master", "CI/CD" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -17,24 +17,24 @@ jobs:
   windows-build:
     # The type of runner that the job will run on
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Increment version
-        uses: reecetech/version-increment@2023.4.1
-        id: version
+        uses: actions/checkout@v4
         with:
-          scheme: semver
-          increment: patch
+          submodules: 'recursive'
 
       - name: Installation
         run: |
             vcpkg install protobuf --triplet x86-windows-static
             vcpkg install protobuf --triplet x64-windows-static
+
+      - name: Setup Developer CMD
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build
         run: |
@@ -43,14 +43,14 @@ jobs:
 
       - name: Package
         run: |
-            Compress-Archive release/* "goldberg-emulator-zachareee-${{ steps.version.outputs.version }}.zip" -CompressionLevel Optimal
+            Compress-Archive release/* "goldberg-emulator-zachareee-${{ github.run_id }}.zip" -CompressionLevel Optimal
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "goldberg-emulator-zachareee-${{ steps.version.outputs.version }}.zip"
+          artifacts: "goldberg-emulator-zachareee-${{ github.run_id }}.zip"
           replacesArtifacts: false
           allowUpdates: true
           generateReleaseNotes: true
-          name: "Release v${{ steps.version.outputs.version }}"
-          tag: "v${{ steps.version.outputs.version }}"
+          name: "Release ${{ github.run_id }}"
+          tag: "${{ github.run_id }}"

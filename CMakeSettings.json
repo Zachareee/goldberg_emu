@@ -95,8 +95,7 @@
       "remoteCopySources": true,
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": true,
-      "remoteCopySourcesMethod": "rsync",
-      "variables": []
+      "remoteCopySourcesMethod": "rsync"
     },
     {
       "name": "Linux-x64-Debug",
@@ -117,8 +116,7 @@
       "remoteCopySources": true,
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": true,
-      "remoteCopySourcesMethod": "rsync",
-      "variables": []
+      "remoteCopySourcesMethod": "rsync"
     },
     {
       "name": "Linux-x86-Release",
@@ -139,8 +137,7 @@
       "remoteCopySources": true,
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": true,
-      "remoteCopySourcesMethod": "rsync",
-      "variables": []
+      "remoteCopySourcesMethod": "rsync"
     },
     {
       "name": "Linux-x86-Debug",
@@ -161,8 +158,7 @@
       "remoteCopySources": true,
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": true,
-      "remoteCopySourcesMethod": "rsync",
-      "variables": []
+      "remoteCopySourcesMethod": "rsync"
     },
     {
       "name": "Windows-x64-ExperimentalRelease",
@@ -184,9 +180,14 @@
           "name": "EMU_EXPERIMENTAL_BUILD",
           "value": "true",
           "type": "STRING"
+        },
+        {
+          "name": "EMU_OVERLAY",
+          "value": "true",
+          "type": "BOOL"
         }
       ],
-      "cmakeToolchain": "../vcpkg/scripts/buildsystems/vcpkg.cmake"
+      "cmakeToolchain": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
     },
     {
       "name": "Windows-x64-ExperimentalDebug",
@@ -384,8 +385,7 @@
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "WSL-x64-Debug",
@@ -399,8 +399,7 @@
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
       "wslPath": "${defaultWSLPath}",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "WSL-x86-Release",
@@ -414,8 +413,7 @@
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x86" ],
       "wslPath": "${defaultWSLPath}",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "WSL-x86-Debug",
@@ -429,8 +427,7 @@
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x86" ],
       "wslPath": "${defaultWSLPath}",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "WSL-x64-ExperimentalRelease",

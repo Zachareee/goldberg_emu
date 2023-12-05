@@ -58,15 +58,17 @@ struct Notification
     static constexpr std::chrono::milliseconds fade_out  = std::chrono::milliseconds(2000);
     static constexpr std::chrono::milliseconds show_time = std::chrono::milliseconds(6000) + fade_in + fade_out;
     static constexpr std::chrono::milliseconds fade_out_start = show_time - fade_out;
-    static constexpr float r = 0.16;
-    static constexpr float g = 0.29;
-    static constexpr float b = 0.48;
+    static constexpr float r = 0.11;
+    static constexpr float g = 0.14;
+    static constexpr float b = 0.18;
     static constexpr float max_alpha = 0.5f;
 
     int id;
     uint8 type;
     std::chrono::seconds start_time;
+    std::string title;
     std::string message;
+    std::string icon;
     std::pair<const Friend, friend_window_state>* frd;
 };
 
@@ -104,7 +106,9 @@ class Steam_Overlay
     std::string show_url;
     std::vector<Overlay_Achievement> achievements;
     bool show_achievements, show_settings;
+    std::map<std::string, std::pair<std::weak_ptr<uint64_t>, int>> icon_map;
     void *fonts_atlas;
+    std::set<ingame_overlay::ToggleKey> keys = { ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB };
 
     bool disable_forced, local_save, warning_forced;
     uint32_t appid;
@@ -138,6 +142,7 @@ class Steam_Overlay
     static void steam_overlay_callback(void* object, Common_Message* msg);
 
     void Callback(Common_Message* msg);
+    std::weak_ptr<uint64_t> GenerateIcon(std::string& name, int* size);
     void RunCallbacks();
 
     bool FriendJoinable(std::pair<const Friend, friend_window_state> &f);

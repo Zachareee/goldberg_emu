@@ -1,5 +1,6 @@
 import os
 
+CPPVERSION="201103L" #C++11, change to "201703L" for C++17
 def files_from_dir(dir, extension, filter=[]):
     out = []
     for f in os.listdir(dir):
@@ -22,10 +23,13 @@ def cl_line_link(arguments, linker_arguments):
 def cl_line_exe(arguments, linker_arguments):
     return "cl {} /link {}\n".format(' '.join(arguments), ' '.join(linker_arguments))
 
-jobs = 4
-normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs)]
+def localise(command: str) -> str:
+    return "setlocal\n" + command + "endlocal\n"
 
-includes = ["ImGui", "overlay_experimental"]
+jobs = 4
+normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs), "/D ImTextureID=ImU64", f"/DUTF_CPP_CPLUSPLUS={CPPVERSION}"]
+
+includes = ["dll", "ingame_overlay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include/ingame_overlay", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include", "ingame_overlay/deps/mini_detour/deps/capstone/include", "ingame_overlay/deps/System/include", "ingame_overlay/deps/System/deps/utfcpp/include"]
 includes_32 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X86_DIRECTORY%\\include\\"] + includes))
 includes_64 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X64_DIRECTORY%\\include\\"] + includes))
 
@@ -33,22 +37,22 @@ debug_build_args = []
 release_build_args = ["/DEMU_RELEASE_BUILD", "/DNDEBUG"]
 steamclient_build_args = ["/DSTEAMCLIENT_DLL"]
 
-experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY"]
+experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY", "/DUSE_SPDLOG"]
 steamclient_experimental_build_args = experimental_build_args + steamclient_build_args
 
-normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "rtlgenrandom.lib", "Shell32.lib"]
+normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "Shell32.lib"]
 experimental_linker_libs = ["opengl32.lib", "Winmm.lib"] + normal_linker_libs
 linker_32 = ['"%PROTOBUF_X86_LIBRARY%"']
 linker_64 = ['"%PROTOBUF_X64_LIBRARY%"']
 
 controller_deps = ["controller/gamepad.c"]
-imgui_deps =  files_from_dir("ImGui", ".cpp") + ["ImGui/backends/imgui_impl_dx9.cpp", "ImGui/backends/imgui_impl_dx10.cpp", "ImGui/backends/imgui_impl_dx11.cpp", "ImGui/backends/imgui_impl_dx12.cpp", "ImGui/backends/imgui_impl_win32.cpp", "ImGui/backends/imgui_impl_vulkan.cpp", "ImGui/backends/imgui_impl_opengl3.cpp", "ImGui/backends/imgui_win_shader_blobs.cpp"]
+imgui_deps =  files_from_dir("ingame_overlay/deps/ImGui", ".cpp") + ["ingame_overlay/deps/ImGui/backends/imgui_impl_dx9.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_dx10.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_dx11.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_dx12.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_win32.cpp", "ingame_overlay/deps/ImGui/backends/imgui_impl_opengl3.cpp", "ingame_overlay/deps/ImGui/backends/imgui_win_shader_blobs.cpp"]
 proto_deps = list(map(lambda a: a.replace(".proto", ".pb.cc"), files_from_dir("dll", ".proto")))
-all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + imgui_deps + files_from_dir("overlay_experimental/System", ".cpp")
+all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + imgui_deps + files_from_dir("ingame_overlay/deps/System", ".cpp")
 
 sc_different_deps = ["flat.cpp", "dll.cpp"]
 steam_deps = files_from_dir("dll", ".cpp", sc_different_deps)
-overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("overlay_experimental/windows", ".cpp")
+overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp", "Vulkan_Hook.cpp") + files_from_dir("ingame_overlay/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone", ".c") + files_from_dir("ingame_overlay/deps/System/src", ".cpp")
 experimental_steam_deps = steam_deps + overlay_deps
 sc_different_deps = list(map(lambda a: "dll/" + a, sc_different_deps))
 
@@ -67,12 +71,10 @@ call build_set_protobuf_directories.bat
 
 head_32bit = """"%PROTOC_X86_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x86.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 head_64bit = """"%PROTOC_X64_EXE%" -I.\dll\ --cpp_out=.\dll\ .\dll\\net.proto
 call build_env_x64.bat
-cl dll/rtlgenrandom.c dll/rtlgenrandom.def
 """
 
 footer = """
@@ -85,8 +87,7 @@ call build_win_lobby_connect.bat
 call build_win_find_interfaces.bat
 """
 
-out = head
-out += head_32bit
+x86 = head_32bit
 
 deps_folder = "deps"
 sc_deps_folder = "deps_sc"
@@ -112,15 +113,16 @@ def generate_common(include_arch, linker_arch, steam_api_name, steamclient_name)
     out += cl_line_link(release_build_args + experimental_build_args + ["steamclient.cpp"] + normal_build_args, ["/debug:none", "/OUT:release\experimental\\{}".format(steamclient_name)])
     return out
 
-out += generate_common(includes_32, linker_32, "steam_api.dll", "steamclient.dll")
+x86 += generate_common(includes_32, linker_32, "steam_api.dll", "steamclient.dll")
 
-out += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib", "user32.lib"] + normal_build_args, ["/debug:none", "/OUT:release\experimental_steamclient\steamclient_loader.exe"])
+x86 += cl_line_exe(files_from_dir("steamclient_loader", ".cpp") + ["advapi32.lib", "user32.lib"] + normal_build_args, ["/debug:none", "/OUT:release\experimental_steamclient\steamclient_loader.exe"])
 
-out += head_64bit
-out += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
+x64 = head_64bit
+x64 += generate_common(includes_64, linker_64, "steam_api64.dll", "steamclient64.dll")
 
+#out = localise(out)
 
-out += footer
+out = head + localise(x86) + localise(x64) + footer
 
 
 with open("build_win_release_test.bat", "w") as f:
