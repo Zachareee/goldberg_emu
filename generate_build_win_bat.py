@@ -37,7 +37,7 @@ debug_build_args = []
 release_build_args = ["/DEMU_RELEASE_BUILD", "/DNDEBUG"]
 steamclient_build_args = ["/DSTEAMCLIENT_DLL"]
 
-experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY", "/DUSE_SPDLOG"]
+experimental_build_args = ["/DEMU_EXPERIMENTAL_BUILD", "/DCONTROLLER_SUPPORT", "/DEMU_OVERLAY", "/DCAPSTONE_HAS_X86"]
 steamclient_experimental_build_args = experimental_build_args + steamclient_build_args
 
 normal_linker_libs = ["Iphlpapi.lib", "Ws2_32.lib", "Shell32.lib"]
@@ -52,7 +52,7 @@ all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + im
 
 sc_different_deps = ["flat.cpp", "dll.cpp"]
 steam_deps = files_from_dir("dll", ".cpp", sc_different_deps)
-overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp", "Vulkan_Hook.cpp") + files_from_dir("ingame_overlay/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone", ".c") + files_from_dir("ingame_overlay/deps/System/src", ".cpp")
+overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp", "Vulkan_Hook.cpp") + files_from_dir("ingame_overlay/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone", ".c") + files_from_dir("ingame_overlay/deps/System/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone/arch/X86", ".c")
 experimental_steam_deps = steam_deps + overlay_deps
 sc_different_deps = list(map(lambda a: "dll/" + a, sc_different_deps))
 
