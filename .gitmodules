@@ -3,4 +3,4 @@
 	url = https://github.com/nothings/stb.git
 [submodule "ingame_overlay"]
 	path = ingame_overlay
-	url = https://github.com/Zachareee/ingame_overlay
+	url = https://github.com/nemirtingas/ingame_overlay
