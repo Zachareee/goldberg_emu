@@ -86,7 +86,7 @@ struct Overlay_Achievement
 
 #ifdef EMU_OVERLAY
 #include <future>
-#include "Renderer_Hook.h"
+#include "InGameOverlay/RendererHook.h"
 class Steam_Overlay
 {
     Settings* settings;
@@ -99,7 +99,7 @@ class Steam_Overlay
     std::map<Friend, friend_window_state, Friend_Less> friends;
 
     bool setup_overlay_called;
-    bool is_ready;
+    InGameOverlay::OverlayHookState is_ready;
     bool show_overlay;
     ENotificationPosition notif_position;
     int h_inset, v_inset;
@@ -108,7 +108,7 @@ class Steam_Overlay
     bool show_achievements, show_settings;
     std::map<std::string, std::pair<std::weak_ptr<uint64_t>, int>> icon_map;
     void *fonts_atlas;
-    std::set<ingame_overlay::ToggleKey> keys = { ingame_overlay::ToggleKey::SHIFT, ingame_overlay::ToggleKey::TAB };
+    std::set<InGameOverlay::ToggleKey> keys = { InGameOverlay::ToggleKey::SHIFT, InGameOverlay::ToggleKey::TAB };
 
     bool disable_forced, local_save, warning_forced;
     uint32_t appid;
@@ -130,8 +130,8 @@ class Steam_Overlay
 
     std::recursive_mutex overlay_mutex;
     std::atomic<bool> i_have_lobby;
-    std::future<ingame_overlay::Renderer_Hook*> future_renderer;
-    ingame_overlay::Renderer_Hook* _renderer;
+    std::future<InGameOverlay::RendererHook_t*> future_renderer;
+    InGameOverlay::RendererHook_t* _renderer;
 
     Steam_Overlay(Steam_Overlay const&) = delete;
     Steam_Overlay(Steam_Overlay&&) = delete;
@@ -171,7 +171,7 @@ public:
     void SetupOverlay();
     void UnSetupOverlay();
 
-    void HookReady(bool ready);
+    void HookReady(InGameOverlay::OverlayHookState ready);
 
     void CreateFonts();
     void OverlayProc();

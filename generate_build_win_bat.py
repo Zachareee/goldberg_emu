@@ -29,7 +29,7 @@ def localise(command: str) -> str:
 jobs = 4
 normal_build_args = ["/EHsc", "/Ox", "/MP{}".format(jobs), "/D ImTextureID=ImU64", f"/DUTF_CPP_CPLUSPLUS={CPPVERSION}", "/DCAPSTONE_USE_SYS_DYN_MEM"]
 
-includes = ["dll", "ingame_overlay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include/ingame_overlay", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include", "ingame_overlay/deps/mini_detour/deps/capstone/include", "ingame_overlay/deps/System/include", "ingame_overlay/deps/System/deps/utfcpp/include"]
+includes = ["dll", "ingame_overlay/deps/ImGui/backends", "overlay_experimental", "ingame_overlay/include", "ingame_overlay/deps", "ingame_overlay/deps/ImGui", "ingame_overlay/deps/mini_detour/include", "ingame_overlay/src", "ingame_overlay/deps/System/include", "ingame_overlay/src/glad2/include", "ingame_overlay/src/vulkan_sdk/include", "ingame_overlay/deps/mini_detour/deps/capstone/include", "ingame_overlay/deps/System/include", "ingame_overlay/deps/System/deps/utfcpp/include", "ingame_overlay/src/VulkanSDK/include"]
 includes_32 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X86_DIRECTORY%\\include\\"] + includes))
 includes_64 = list(map(lambda a: '/I{}'.format(a), ["%PROTOBUF_X64_DIRECTORY%\\include\\"] + includes))
 
@@ -52,7 +52,7 @@ all_deps = proto_deps + files_from_dir("detours", ".cpp") + controller_deps + im
 
 sc_different_deps = ["flat.cpp", "dll.cpp"]
 steam_deps = files_from_dir("dll", ".cpp", sc_different_deps)
-overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp", "Vulkan_Hook.cpp") + files_from_dir("ingame_overlay/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone", ".c") + files_from_dir("ingame_overlay/deps/System/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone/arch/X86", ".c")
+overlay_deps = files_from_dir("overlay_experimental", ".cpp") + files_from_dir("ingame_overlay/src/windows", ".cpp", "VulkanHook.cpp") + files_from_dir("ingame_overlay/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone", ".c") + files_from_dir("ingame_overlay/deps/System/src", ".cpp") + files_from_dir("ingame_overlay/deps/mini_detour/deps/capstone/arch/X86", ".c")
 experimental_steam_deps = steam_deps + overlay_deps
 sc_different_deps = list(map(lambda a: "dll/" + a, sc_different_deps))
 

@@ -12,7 +12,7 @@
 #include "../dll/settings_parser.h"
 #include "../dll/common_includes.h"
 
-#include "Renderer_Detector.h"
+#include "InGameOverlay/RendererDetector.h"
 
 static constexpr int max_window_id = 10000;
 static constexpr int base_notif_window_id  = 0 * max_window_id;
@@ -96,7 +96,7 @@ int find_free_notification_id(std::vector<Notification> const& notifications)
 }
 
 #ifdef __WINDOWS__
-#include "windows/Windows_Hook.h"
+#include "Windows/WindowsHook.h"
 #endif
 
 #include "notification.h"
@@ -121,7 +121,7 @@ Steam_Overlay::Steam_Overlay(Settings* settings, SteamCallResults* callback_resu
     network(network),
     setup_overlay_called(false),
     show_overlay(false),
-    is_ready(false),
+    is_ready(InGameOverlay::OverlayHookState::Reset),
     notif_position(ENotificationPosition::k_EPositionBottomLeft),
     h_inset(0),
     v_inset(0),
@@ -172,7 +172,7 @@ Steam_Overlay::~Steam_Overlay()
 
 bool Steam_Overlay::Ready() const
 {
-    return is_ready;
+    return is_ready == InGameOverlay::OverlayHookState::Ready;
 }
 
 bool Steam_Overlay::NeedPresent() const
@@ -198,23 +198,23 @@ void Steam_Overlay::SetupOverlay()
     if (!setup_overlay_called)
     {
         setup_overlay_called = true;
-        future_renderer = ingame_overlay::DetectRenderer();
+        future_renderer = InGameOverlay::DetectRenderer();
     }
 }
 
 
 void Steam_Overlay::UnSetupOverlay()
 {
-    ingame_overlay::StopRendererDetection();
+    InGameOverlay::StopRendererDetection();
     if (!Ready() && future_renderer.valid()) {
         if (future_renderer.wait_for(std::chrono::milliseconds{500}) ==  std::future_status::ready) {
             future_renderer.get();
-            ingame_overlay::FreeDetector();
+            InGameOverlay::FreeDetector();
         }
     }
 }
 
-void Steam_Overlay::HookReady(bool ready)
+void Steam_Overlay::HookReady(InGameOverlay::OverlayHookState ready)
 {
     PRINT_DEBUG("%s %u\n", __FUNCTION__, ready);
     {
@@ -531,101 +531,102 @@ void Steam_Overlay::BuildContextMenu(Friend const& frd, friend_window_state& sta
 
 void Steam_Overlay::BuildFriendWindow(Friend const& frd, friend_window_state& state)
 {
-    if (!(state.window_state & window_state_show))
-        return;
+    // TODO: Fix ImGui API call
+    //if (!(state.window_state & window_state_show))
+    //    return;
 
-    bool show = true;
-    bool send_chat_msg = false;
+    //bool show = true;
+    //bool send_chat_msg = false;
 
-    float width = ImGui::CalcTextSize("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").x;
-    
-    if (state.window_state & window_state_need_attention && ImGui::IsWindowFocused())
-    {
-        state.window_state &= ~window_state_need_attention;
-    }
-    ImGui::SetNextWindowSizeConstraints(ImVec2{ width, ImGui::GetFontSize()*8 + ImGui::GetFrameHeightWithSpacing()*4 },
-        ImVec2{ std::numeric_limits<float>::max() , std::numeric_limits<float>::max() });
+    //float width = ImGui::CalcTextSize("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").x;
+    //
+    //if (state.window_state & window_state_need_attention && ImGui::IsWindowFocused())
+    //{
+    //    state.window_state &= ~window_state_need_attention;
+    //}
+    //ImGui::SetNextWindowSizeConstraints(ImVec2{ width, ImGui::GetFontSize()*8 + ImGui::GetFrameHeightWithSpacing()*4 },
+    //    ImVec2{ std::numeric_limits<float>::max() , std::numeric_limits<float>::max() });
 
-    // Window id is after the ###, the window title is the friend name
-    std::string friend_window_id = std::move("###" + std::to_string(state.id));
-    if (ImGui::Begin((state.window_title + friend_window_id).c_str(), &show))
-    {
-        if (state.window_state & window_state_need_attention && ImGui::IsWindowFocused())
-        {
-            state.window_state &= ~window_state_need_attention;
-        }
+    //// Window id is after the ###, the window title is the friend name
+    //std::string friend_window_id = std::move("###" + std::to_string(state.id));
+    //if (ImGui::Begin((state.window_title + friend_window_id).c_str(), &show))
+    //{
+    //    if (state.window_state & window_state_need_attention && ImGui::IsWindowFocused())
+    //    {
+    //        state.window_state &= ~window_state_need_attention;
+    //    }
 
-        // Fill this with the chat box and maybe the invitation
-        if (state.window_state & (window_state_lobby_invite | window_state_rich_invite))
-        {
-            ImGui::LabelText("##label", "%s invited you to join the game.", frd.name().c_str());
-            ImGui::SameLine();
-            if (ImGui::Button("Accept"))
-            {
-                state.window_state |= window_state_join;
-                this->has_friend_action.push(frd);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Refuse"))
-            {
-                state.window_state &= ~(window_state_lobby_invite | window_state_rich_invite);
-            }
-        }
+    //    // Fill this with the chat box and maybe the invitation
+    //    if (state.window_state & (window_state_lobby_invite | window_state_rich_invite))
+    //    {
+    //        ImGui::LabelText("##label", "%s invited you to join the game.", frd.name().c_str());
+    //        ImGui::SameLine();
+    //        if (ImGui::Button("Accept"))
+    //        {
+    //            state.window_state |= window_state_join;
+    //            this->has_friend_action.push(frd);
+    //        }
+    //        ImGui::SameLine();
+    //        if (ImGui::Button("Refuse"))
+    //        {
+    //            state.window_state &= ~(window_state_lobby_invite | window_state_rich_invite);
+    //        }
+    //    }
 
-        ImGui::InputTextMultiline("##chat_history", &state.chat_history[0], state.chat_history.length(), { -1.0f, -2.0f * ImGui::GetFontSize() }, ImGuiInputTextFlags_ReadOnly);
-        // TODO: Fix the layout of the chat line + send button.
-        // It should be like this: chat input should fill the window size minus send button size (button size is fixed)
-        // |------------------------------|
-        // | /--------------------------\ |
-        // | |                          | |
-        // | |       chat history       | |
-        // | |                          | |
-        // | \--------------------------/ |
-        // | [____chat line______] [send] |
-        // |------------------------------|
-        //
-        // And it is like this
-        // |------------------------------|
-        // | /--------------------------\ |
-        // | |                          | |
-        // | |       chat history       | |
-        // | |                          | |
-        // | \--------------------------/ |
-        // | [__chat line__] [send]       |
-        // |------------------------------|
-        float wnd_width = ImGui::GetWindowContentRegionWidth();
-        ImGuiStyle &style = ImGui::GetStyle();
-        wnd_width -= ImGui::CalcTextSize("Send").x + style.FramePadding.x * 2 + style.ItemSpacing.x + 1;
+    //    ImGui::InputTextMultiline("##chat_history", &state.chat_history[0], state.chat_history.length(), { -1.0f, -2.0f * ImGui::GetFontSize() }, ImGuiInputTextFlags_ReadOnly);
+    //    // TODO: Fix the layout of the chat line + send button.
+    //    // It should be like this: chat input should fill the window size minus send button size (button size is fixed)
+    //    // |------------------------------|
+    //    // | /--------------------------\ |
+    //    // | |                          | |
+    //    // | |       chat history       | |
+    //    // | |                          | |
+    //    // | \--------------------------/ |
+    //    // | [____chat line______] [send] |
+    //    // |------------------------------|
+    //    //
+    //    // And it is like this
+    //    // |------------------------------|
+    //    // | /--------------------------\ |
+    //    // | |                          | |
+    //    // | |       chat history       | |
+    //    // | |                          | |
+    //    // | \--------------------------/ |
+    //    // | [__chat line__] [send]       |
+    //    // |------------------------------|
+    //    float wnd_width = ImGui::GetWindowContentRegionWidth();
+    //    ImGuiStyle &style = ImGui::GetStyle();
+    //    wnd_width -= ImGui::CalcTextSize("Send").x + style.FramePadding.x * 2 + style.ItemSpacing.x + 1;
 
-        ImGui::PushItemWidth(wnd_width);
-        if (ImGui::InputText("##chat_line", state.chat_input, max_chat_len, ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            send_chat_msg = true;
-            ImGui::SetKeyboardFocusHere(-1);
-        }
-        ImGui::PopItemWidth();
+    //    ImGui::PushItemWidth(wnd_width);
+    //    if (ImGui::InputText("##chat_line", state.chat_input, max_chat_len, ImGuiInputTextFlags_EnterReturnsTrue))
+    //    {
+    //        send_chat_msg = true;
+    //        ImGui::SetKeyboardFocusHere(-1);
+    //    }
+    //    ImGui::PopItemWidth();
 
-        ImGui::SameLine();
+    //    ImGui::SameLine();
 
-        if (ImGui::Button("Send"))
-        {
-            send_chat_msg = true;
-        }
+    //    if (ImGui::Button("Send"))
+    //    {
+    //        send_chat_msg = true;
+    //    }
 
-        if (send_chat_msg)
-        {
-            if (!(state.window_state & window_state_send_message))
-            {
-                has_friend_action.push(frd);
-                state.window_state |= window_state_send_message;
-            }
-        }
-    }
-    // User closed the friend window
-    if (!show)
-        state.window_state &= ~window_state_show;
+    //    if (send_chat_msg)
+    //    {
+    //        if (!(state.window_state & window_state_send_message))
+    //        {
+    //            has_friend_action.push(frd);
+    //            state.window_state |= window_state_send_message;
+    //        }
+    //    }
+    //}
+    //// User closed the friend window
+    //if (!show)
+    //    state.window_state &= ~window_state_show;
 
-    ImGui::End();
+    //ImGui::End();
 }
 
 ImFont *font_default;
@@ -854,27 +855,28 @@ void Steam_Overlay::OverlayProc()
             ImGui::LabelText("##label", "Friends");
 
             std::lock_guard<std::recursive_mutex> lock(overlay_mutex);
-            if (!friends.empty())
-            {
-                if (ImGui::ListBoxHeader("##label", friends.size()))
-                {
-                    std::for_each(friends.begin(), friends.end(), [this](std::pair<Friend const, friend_window_state> &i)
-                    {
-                        ImGui::PushID(i.second.id-base_friend_window_id+base_friend_item_id);
+            // TODO: Fix ImGui API
+            //if (!friends.empty())
+            //{
+            //    if (ImGui::ListBoxHeader("##label", friends.size()))
+            //    {
+            //        std::for_each(friends.begin(), friends.end(), [this](std::pair<Friend const, friend_window_state> &i)
+            //        {
+            //            ImGui::PushID(i.second.id-base_friend_window_id+base_friend_item_id);
 
-                        ImGui::Selectable(i.second.window_title.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick);
-                        BuildContextMenu(i.first, i.second);
-                        if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0))
-                        {
-                            i.second.window_state |= window_state_show;
-                        }
-                        ImGui::PopID();
+            //            ImGui::Selectable(i.second.window_title.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick);
+            //            BuildContextMenu(i.first, i.second);
+            //            if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0))
+            //            {
+            //                i.second.window_state |= window_state_show;
+            //            }
+            //            ImGui::PopID();
 
-                        BuildFriendWindow(i.first, i.second);
-                    });
-                    ImGui::ListBoxFooter();
-                }
-            }
+            //            BuildFriendWindow(i.first, i.second);
+            //        });
+            //        ImGui::ListBoxFooter();
+            //    }
+            //}
 
             if (show_achievements && achievements.size()) {
                 ImGui::SetNextWindowSizeConstraints(ImVec2(ImGui::GetFontSize() * 32, ImGui::GetFontSize() * 32), ImVec2(8192, 8192));
