@@ -110,7 +110,7 @@ static void load_gamecontroller_settings(Settings *settings)
             }
 
             settings->controller_settings.action_sets[action_set_name] = button_pairs;
-            PRINT_DEBUG("Added %u action names to %s\n", button_pairs.size(), action_set_name.c_str());
+            PRINT_DEBUG("Added %zu action names to %s\n", button_pairs.size(), action_set_name.c_str());
         }
     }
 

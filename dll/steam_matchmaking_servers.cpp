@@ -33,7 +33,7 @@ Steam_Matchmaking_Servers::Steam_Matchmaking_Servers(class Settings *settings, c
     this->network->setCallback(CALLBACK_ID_GAMESERVER, (uint64) 0, &network_callback, this);
 }
 
-static int server_list_request;
+static long long server_list_request;
 
 // Request a new list of servers of a particular type.  These calls each correspond to one of the EMatchMakingType values.
 // Each call allocates a new asynchronous request object.
@@ -297,7 +297,7 @@ gameserveritem_t *Steam_Matchmaking_Servers::GetServerDetails( HServerListReques
         PRINT_DEBUG("equal? %p %p\n", hRequest, g->id);
         if (g->id == hRequest) {
             gameservers_filtered = g->gameservers_filtered;
-            PRINT_DEBUG("found %u\n", gameservers_filtered.size());
+            PRINT_DEBUG("found %zu\n", gameservers_filtered.size());
             break;
         }
 

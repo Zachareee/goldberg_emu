@@ -6661,7 +6661,7 @@ STEAMAPI_API void *SteamAPI_ISteamGameServer_GetPublicIP( intptr_t instancePtr, 
         get_steam_client()->steam_gameserver->GetPublicIP_fix((SteamIPAddress_t *)instancePtr);
         return (void *)instancePtr;
     } else {
-        return (void *)((ISteamGameServer012 *)instancePtr)->GetPublicIP_old();
+        return (void *)(intptr_t)((ISteamGameServer012 *)instancePtr)->GetPublicIP_old();
     }
 }
 

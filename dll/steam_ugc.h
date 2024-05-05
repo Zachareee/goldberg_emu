@@ -600,13 +600,13 @@ bool RemoveItemPreview( UGCUpdateHandle_t handle, uint32 index )
 
 bool AddContentDescriptor( UGCUpdateHandle_t handle, EUGCContentDescriptorID descid )
 {
-    PRINT_DEBUG("Steam_UGC::AddContentDescriptor %llu %u\n", handle);
+    PRINT_DEBUG("Steam_UGC::AddContentDescriptor %llu %u\n", handle, descid);
     return false;
 }
 
 bool RemoveContentDescriptor( UGCUpdateHandle_t handle, EUGCContentDescriptorID descid )
 {
-    PRINT_DEBUG("Steam_UGC::RemoveContentDescriptor %llu %u\n", handle);
+    PRINT_DEBUG("Steam_UGC::RemoveContentDescriptor %llu %u\n", handle, descid);
     return false;
 }
 
