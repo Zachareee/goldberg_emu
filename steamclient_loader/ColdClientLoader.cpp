@@ -3,38 +3,62 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files
 #include <windows.h>
+#include <shellapi.h>
+#include <atlstr.h>
 // C RunTime Header Files
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <iostream>
+
+#define CMDLINELEN 4096
 
 bool IsNotRelativePathOrRemoveFileName(WCHAR* output, bool Remove)
 {
 	int LG = lstrlenW(output);
 	for (int i = LG; i > 0; i--) {
 		if (output[i] == '\\') {
-			if(Remove)
-				RtlFillMemory(&output[i], (LG - i) * sizeof(WCHAR), NULL);
+			// if(Remove)
+			// 	RtlFillMemory(&output[i], (LG - i) * sizeof(WCHAR), NULL);
 			return true;
 		}
 	}
 	return false;
 }
 
+int createAppProcess(WCHAR*, WCHAR*, WCHAR*, WCHAR*, WCHAR*, WCHAR*, WCHAR*);
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+	if (CW2A(lpCmdLine)[0])
+	{
+		LPWSTR* argslist;
+		int args;
+		if (!(argslist = CommandLineToArgvW(lpCmdLine, &args))) {
+			MessageBoxA(NULL, "Something went wrong with interpreting the command line arguments", "ColdClientLoader", MB_ICONERROR);
+			return 0;
+		}
+
+		if (args != 6) {
+			MessageBoxA(NULL, "Not enough arguments were provided!", "ColdClientLoader", MB_ICONERROR);
+			return 0;
+		}
+		int error = createAppProcess(argslist[0], argslist[1], argslist[2], argslist[3], argslist[4], argslist[5]);
+		LocalFree(argslist);
+
+		return error;
+	}
+
+	// original code
 	WCHAR CurrentDirectory[MAX_PATH] = { 0 };
 	WCHAR Client64Path[MAX_PATH] = { 0 };
 	WCHAR ClientPath[MAX_PATH] = { 0 };
 	WCHAR ExeFile[MAX_PATH] = { 0 };
 	WCHAR ExeRunDir[MAX_PATH] = { 0 };
-	WCHAR ExeCommandLine[4096] = { 0 };
+	WCHAR ExeCommandLine[CMDLINELEN] = { 0 };
 	WCHAR AppId[128] = { 0 };
-
-	STARTUPINFOW info = { sizeof(info) };
-	PROCESS_INFORMATION processInfo;
 
 	int Length = GetModuleFileNameW(GetModuleHandleW(NULL), CurrentDirectory, sizeof(CurrentDirectory)) + 1;
 	for (int i = Length; i > 0; i--) {
@@ -52,8 +76,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	GetPrivateProfileStringW(L"SteamClient", L"SteamClientDll", L"", ClientPath, MAX_PATH, CurrentDirectory);
 	GetPrivateProfileStringW(L"SteamClient", L"Exe", NULL, ExeFile, MAX_PATH, CurrentDirectory);
 	GetPrivateProfileStringW(L"SteamClient", L"ExeRunDir", NULL, ExeRunDir, MAX_PATH, CurrentDirectory);
-	GetPrivateProfileStringW(L"SteamClient", L"ExeCommandLine", NULL, ExeCommandLine, 4096, CurrentDirectory);
+	GetPrivateProfileStringW(L"SteamClient", L"ExeCommandLine", NULL, ExeCommandLine, CMDLINELEN, CurrentDirectory);
 	GetPrivateProfileStringW(L"SteamClient", L"AppId", NULL, AppId, sizeof(AppId), CurrentDirectory);
+	return createAppProcess(ClientPath, Client64Path, ExeFile, ExeRunDir, ExeCommandLine, AppId);
+}
+
+int createAppProcess(WCHAR *ClientPath, WCHAR *Client64Path, WCHAR *ExeFile, WCHAR *ExeRunDir, WCHAR *ExeCommandLine, WCHAR *AppId)
+{
+	STARTUPINFOW info = { sizeof(info) };
+	PROCESS_INFORMATION processInfo;
 
 	if (AppId[0]) {
 		SetEnvironmentVariableW(L"SteamAppId", AppId);
@@ -64,25 +95,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	}
 
 	WCHAR TMP[MAX_PATH] = {};
-	if (!IsNotRelativePathOrRemoveFileName(Client64Path, false)) {
-		lstrcpyW(TMP, Client64Path);
-		ZeroMemory(Client64Path, sizeof(Client64Path));
-		GetFullPathNameW(TMP, MAX_PATH, Client64Path, NULL);
-	}
-	if (!IsNotRelativePathOrRemoveFileName(ClientPath, false)) {
-		lstrcpyW(TMP, ClientPath);
-		ZeroMemory(ClientPath, sizeof(ClientPath));
-		GetFullPathNameW(TMP, MAX_PATH, ClientPath, NULL);
-	}
-	if (!IsNotRelativePathOrRemoveFileName(ExeFile, false)) {
-		lstrcpyW(TMP, ExeFile);
-		ZeroMemory(ExeFile, sizeof(ExeFile));
-		GetFullPathNameW(TMP, MAX_PATH, ExeFile, NULL);
-	}
-	if (!IsNotRelativePathOrRemoveFileName(ExeRunDir, false)) {
-		lstrcpyW(TMP, ExeRunDir);
-		ZeroMemory(ExeRunDir, sizeof(ExeRunDir));
-		GetFullPathNameW(TMP, MAX_PATH, ExeRunDir, NULL);
+	WCHAR* testFiles[] = {Client64Path, ClientPath, ExeFile, ExeRunDir};
+
+	for (int i = 0; i < sizeof(testFiles) / sizeof(WCHAR*); i++)
+	{
+		WCHAR* file = testFiles[i];
+		if (!IsNotRelativePathOrRemoveFileName(file, false)) {
+			lstrcpyW(TMP, file);
+			ZeroMemory(file, sizeof(file));
+			GetFullPathNameW(TMP, MAX_PATH, file, NULL);
+		}
 	}
 
 	if (GetFileAttributesW(Client64Path) == INVALID_FILE_ATTRIBUTES) {
