@@ -178,15 +178,12 @@ target_compile_definitions(${LIB_STEAMCLIENT}
 )
 
 # Install the target
+# (the steamclient target is not built on non-Windows platforms, so it must
+#  not be referenced by an install rule there or cmake --install will fail)
 if(WIN32)
   install(TARGETS
     ${LIB_STEAMCLIENT}
     RUNTIME DESTINATION ./
-  )
-else()
-	install(TARGETS
-    ${LIB_STEAMCLIENT}
-    LIBRARY DESTINATION ./
   )
 endif()
 
@@ -216,15 +213,11 @@ target_compile_definitions(${LIB_STEAMNETWORKINGSOCKETS}
 )
 
 # Setup install rules for the target
+# (not built on non-Windows platforms, so no install rule there)
 if(WIN32)
   install(TARGETS
     ${LIB_STEAMNETWORKINGSOCKETS}
     RUNTIME DESTINATION ./
-  )
-else()
-	install(TARGETS
-    ${LIB_STEAMNETWORKINGSOCKETS}
-    LIBRARY DESTINATION ./
   )
 endif()
 

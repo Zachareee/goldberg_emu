@@ -285,6 +285,22 @@ cd "<build folder>"
 make install
 ```
 
+#### One-shot script (install_linux.sh)
+
+A convenience script is provided at the root of the repository that checks for the
+prerequisites above (optionally installing them with your distro's package manager),
+initializes the git submodules, then configures, builds and installs via CMake:
+
+```
+./install_linux.sh                    # release build, installed to /usr/local
+./install_linux.sh --prefix ./install # release build, installed to ./install
+./install_linux.sh --debug            # debug build
+./install_linux.sh --experimental     # experimental build variant
+./install_linux.sh --deps             # also install missing dependencies (sudo)
+```
+
+Run `./install_linux.sh --help` for the full list of options.
+
 ### Additional CMake Related Options
 
 #### Change the target build system
